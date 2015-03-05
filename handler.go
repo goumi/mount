@@ -2,7 +2,7 @@ package mount
 
 import "github.com/goumi/web"
 
-// Handler extends web handler to have a pattern
+// handler extends web handler to have a pattern
 type handler struct {
 	web.Handler
 
@@ -10,6 +10,7 @@ type handler struct {
 	pattern string
 }
 
+// New mounting point
 func New(p string, h web.Handler) web.Handler {
 	return &handler{
 		Handler: h,
@@ -17,34 +18,34 @@ func New(p string, h web.Handler) web.Handler {
 	}
 }
 
-// Serve() creates a new context in order to remap the URL Path
+// Serve creates a new context in order to remap the URL Path
 func (h *handler) Serve(ctx web.Context) {
 
-	// Create new context
-	mctx := newContext(ctx)
-
 	// Load the matched string
-	mp := match(h.pattern, mctx.Path())
+	p := match(h.pattern, ctx.Request().URL.Path)
 
-	// Check if the path match
-	if mp != "" {
+	// Path doesn't match
+	if p == "" {
 
-		// Modify the request
-		mctx.Request().URL.Path = mp
+		// We should just continue the chain
+		ctx.Next()
 
-		// Serve the hadler
-		h.Handler.Serve(mctx)
+		// Skip the rest
+		return
 	}
 
-	// Continue to the next one
-	mctx.Next()
+	// Create new context
+	ctx = NewContext(ctx, p)
+
+	// Serve the hadler
+	h.Handler.Serve(ctx)
 }
 
-// match() checks if there is a match on the patter and on the request
-func match(pattern, path string) (mp string) {
+// match checks if there is a match on the pattern and on the request
+func match(pattern, path string) (p string) {
 
 	// Response is nil by default
-	mp = ""
+	p = ""
 
 	// Load the pattern length
 	n := len(pattern)
@@ -57,18 +58,17 @@ func match(pattern, path string) (mp string) {
 	// Patterns should have a trailing slash in order to match anyting
 	if pattern[n-1] != '/' {
 
-		// Patter is different
+		// Pattern is different
 		if pattern == path {
-			mp = "/"
+			p = "/"
 		}
 
-		// Return
 		return
 	}
 
 	// Check if the pattern matches
 	if len(path) >= n && path[0:n] == pattern {
-		mp = path[n-1:]
+		p = path[n-1:]
 	}
 
 	return
