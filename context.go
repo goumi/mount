@@ -10,7 +10,7 @@ type context struct {
 	origin string
 }
 
-// Create a new context
+// NewContext creates a new context
 func NewContext(ctx web.Context, path string) web.Context {
 
 	// Load the previous path
@@ -25,7 +25,7 @@ func NewContext(ctx web.Context, path string) web.Context {
 	}
 }
 
-// Next() restores the path and calls next middleware
+// Next restores the path and calls next middleware
 func (ctx *context) Next() {
 
 	// Set the path back to the original
